@@ -35,6 +35,11 @@ import { RouterLink } from '@angular/router';
           <div class="tema-icon"><span class="material-icons">public</span></div>
           <h3>Missões</h3>
         </a>
+
+        <a routerLink="/tema/Culto Solene" class="tema-card">
+          <div class="tema-icon"><span class="material-icons">account_balance</span></div>
+          <h3>Culto Solene</h3>
+        </a>
       </div>
     </main>
   `,

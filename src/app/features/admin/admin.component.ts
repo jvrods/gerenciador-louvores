@@ -42,6 +42,7 @@ import { Observable } from 'rxjs';
               <option value="Ceia">Ceia</option>
               <option value="Primícias">Primícias</option>
               <option value="Missões">Missões</option>
+              <option value="Culto Solene">Culto Solene</option>
             </select>
           </div>
 
