@@ -9,4 +9,5 @@ export interface Louvor {
   linkSpotify?: string;
   linkYoutubeMusic?: string;
   imagemUrl?: string; // Mantido como fallback caso não haja Youtube
+  inPlaylist?: boolean;
 }

@@ -1,6 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { LouvorService, PlaylistConfig } from '../../core/services/louvor.service';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-home',
@@ -40,6 +42,39 @@ import { RouterLink } from '@angular/router';
           <div class="tema-icon"><span class="material-icons">account_balance</span></div>
           <h3>Culto Solene</h3>
         </a>
+
+        <!-- Playlist Card -->
+        <a href="javascript:void(0)" (click)="abrirModalPlaylist()" class="tema-card playlist-card">
+          <div class="tema-icon"><span class="material-icons">queue_music</span></div>
+          <h3>Playlist Next Service</h3>
+          <p style="font-size: 13px; color: var(--text-muted); margin-top: 8px; text-align: center;">Ouvir Agora</p>
+        </a>
+      </div>
+
+      <!-- Modal de Plataforma -->
+      <div class="modal-overlay" *ngIf="showModal" (click)="fecharModal()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+          <h3>Escolha a Plataforma</h3>
+          <p style="color: var(--text-muted); margin-bottom: 20px;">Onde você deseja escutar a playlist do culto?</p>
+          
+          <div style="display: flex; gap: 15px;">
+            <button class="btn btn-platform youtube" (click)="abrirLinkPlaylist('youtube')">
+              <span class="material-icons">play_circle_filled</span>
+              YouTube
+            </button>
+            <button class="btn btn-platform ytmusic" (click)="abrirLinkPlaylist('ytmusic')">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0C5.38 0 0 5.38 0 12s5.38 12 12 12 12-5.38 12-12S18.62 0 12 0zm0 18.27A6.27 6.27 0 1 1 18.27 12 6.28 6.28 0 0 1 12 18.27zm3.17-6.52l-4.57 2.65a.29.29 0 0 1-.43-.25v-5.3a.29.29 0 0 1 .43-.25l4.57 2.65a.29.29 0 0 1 0 .5z"/>
+              </svg>
+              YT Music
+            </button>
+            <button class="btn btn-platform spotify" (click)="abrirLinkPlaylist('spotify')">
+              <span class="material-icons">podcasts</span>
+              Spotify
+            </button>
+          </div>
+          <button class="btn btn-cancel" (click)="fecharModal()">Cancelar</button>
+        </div>
       </div>
     </main>
   `,
@@ -110,6 +145,145 @@ import { RouterLink } from '@angular/router';
       font-size: 24px;
       font-weight: 500;
     }
+    .playlist-card {
+      background: linear-gradient(135deg, rgba(255,0,0,0.1) 0%, rgba(200,0,0,0.05) 100%);
+      border-color: rgba(255,0,0,0.2);
+    }
+    .playlist-card .tema-icon {
+      background: #ff0000;
+    }
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .modal-content {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 30px;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+    .modal-content h3 {
+      margin-top: 0;
+      font-size: 20px;
+    }
+    .btn-platform {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 15px 10px;
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .btn-platform:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+    }
+    .btn-platform span {
+      font-size: 32px;
+    }
+    .btn-platform.youtube {
+      background: #ff0000;
+    }
+    .btn-platform.ytmusic {
+      background: #000000;
+      border: 1px solid #333;
+    }
+    .btn-platform.spotify {
+      background: #1DB954;
+    }
+    .btn-cancel {
+      margin-top: 20px;
+      width: 100%;
+      background: transparent;
+      border: 1px solid var(--text-muted);
+      color: var(--text-color);
+    }
+    .btn-cancel:hover {
+      background: rgba(255,255,255,0.05);
+    }
   `]
 })
-export class HomeComponent { }
+export class HomeComponent implements OnInit {
+  private louvorService = inject(LouvorService);
+  showModal = false;
+  configPlaylist: PlaylistConfig | null = null;
+
+  ngOnInit() {
+    this.louvorService.getPlaylistConfig().subscribe(config => {
+      this.configPlaylist = config;
+    });
+  }
+
+  abrirModalPlaylist() {
+    this.showModal = true;
+  }
+
+  fecharModal() {
+    this.showModal = false;
+  }
+
+  async abrirLinkPlaylist(plataforma: 'youtube' | 'ytmusic' | 'spotify') {
+    if (plataforma === 'youtube') {
+      try {
+        const louvores = await firstValueFrom(this.louvorService.getLouvores());
+        const selecionados = louvores.filter(l => l.inPlaylist && l.linkYoutube);
+        
+        if (selecionados.length === 0) {
+          alert('Nenhum louvor com link do YouTube foi selecionado para a playlist.');
+          return;
+        }
+
+        const videoIds = selecionados.map(l => {
+          const match = l.linkYoutube!.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+          return match ? match[1] : null;
+        }).filter(id => id !== null);
+
+        if (videoIds.length === 0) {
+          alert('Não foi possível extrair os IDs dos vídeos.');
+          return;
+        }
+
+        const playlistUrl = `https://www.youtube.com/watch_videos?video_ids=${videoIds.join(',')}`;
+        window.open(playlistUrl, '_blank');
+        this.fecharModal();
+      } catch (error) {
+        console.error('Erro ao gerar playlist do YouTube:', error);
+        alert('Erro ao carregar os louvores.');
+      }
+      return;
+    }
+
+    // Lógica para YT Music e Spotify
+    if (!this.configPlaylist) {
+      alert('A playlist do próximo culto ainda não foi configurada pelo administrador.');
+      return;
+    }
+
+    const url = this.configPlaylist[plataforma];
+    
+    if (!url) {
+      alert(`O link da playlist no ${plataforma === 'ytmusic' ? 'YouTube Music' : 'Spotify'} não foi configurado.`);
+      return;
+    }
+
+    window.open(url, '_blank');
+    this.fecharModal();
+  }
+}

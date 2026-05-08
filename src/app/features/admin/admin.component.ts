@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { LouvorService } from '../../core/services/louvor.service';
+import { LouvorService, PlaylistConfig } from '../../core/services/louvor.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Louvor } from '../../core/models/louvor.model';
 import { Observable } from 'rxjs';
@@ -23,6 +23,27 @@ import { Observable } from 'rxjs';
     </header>
 
     <main class="container">
+      <div class="admin-panel" style="background: #2a2235; border-color: #4a3b5c;">
+        <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" (click)="showLinksForm = !showLinksForm">
+          <h2 style="margin: 0;">Links da Playlist do Próximo Culto</h2>
+          <span class="material-icons" style="color: var(--text-muted);">
+            {{ showLinksForm ? 'expand_less' : 'expand_more' }}
+          </span>
+        </div>
+        
+        <form *ngIf="showLinksForm" (ngSubmit)="salvarConfigPlaylist()" style="margin-top: 20px;">
+          <div class="form-group">
+            <label>Playlist no YouTube Music</label>
+            <input type="url" [(ngModel)]="configPlaylist.ytmusic" name="confYtmusic" placeholder="https://music.youtube.com/playlist?list=...">
+          </div>
+          <div class="form-group">
+            <label>Playlist no Spotify</label>
+            <input type="url" [(ngModel)]="configPlaylist.spotify" name="confSpotify" placeholder="https://open.spotify.com/playlist/...">
+          </div>
+          <button type="submit" class="btn">Salvar Links</button>
+        </form>
+      </div>
+
       <div class="admin-panel">
         <h2>{{ editando ? 'Editar Louvor' : 'Adicionar Novo Louvor' }}</h2>
         <form (ngSubmit)="salvarLouvor()">
@@ -85,6 +106,7 @@ import { Observable } from 'rxjs';
             <tr>
               <th>Título</th>
               <th>Tema</th>
+              <th>Na Playlist?</th>
               <th>Ações</th>
             </tr>
           </thead>
@@ -92,6 +114,9 @@ import { Observable } from 'rxjs';
             <tr *ngFor="let louvor of louvores$ | async">
               <td>{{ louvor.titulo }}</td>
               <td>{{ louvor.tema }}</td>
+              <td style="text-align: center;">
+                <input type="checkbox" [checked]="louvor.inPlaylist" (change)="togglePlaylist(louvor)" style="transform: scale(1.5);">
+              </td>
               <td>
                 <button (click)="editarLouvor(louvor)" class="btn" style="padding: 5px 10px; font-size: 12px; margin-right: 5px;">Editar</button>
                 <button (click)="deletarLouvor(louvor.id!)" class="btn btn-danger" style="padding: 5px 10px; font-size: 12px;">Excluir</button>
@@ -101,6 +126,11 @@ import { Observable } from 'rxjs';
         </table>
       </div>
     </main>
+
+    <!-- Toast Notification -->
+    <div class="toast" [class.show]="toastMessage">
+      {{ toastMessage }}
+    </div>
   `,
   styles: [`
     .header {
@@ -135,6 +165,24 @@ import { Observable } from 'rxjs';
     .lista-admin th {
       background: rgba(0,0,0,0.2);
     }
+    .toast {
+      position: fixed;
+      bottom: -50px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--primary-color);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transition: bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 1000;
+      font-weight: 500;
+      pointer-events: none;
+    }
+    .toast.show {
+      bottom: 20px;
+    }
   `]
 })
 export class AdminComponent implements OnInit {
@@ -144,6 +192,9 @@ export class AdminComponent implements OnInit {
 
   louvores$!: Observable<Louvor[]>;
   editando = false;
+  toastMessage = '';
+  showLinksForm = false;
+  configPlaylist: PlaylistConfig = { youtube: '', ytmusic: '', spotify: '' };
 
   novoLouvor: Louvor = {
     titulo: '',
@@ -158,6 +209,16 @@ export class AdminComponent implements OnInit {
 
   ngOnInit() {
     this.louvores$ = this.louvorService.getLouvores();
+    this.louvorService.getPlaylistConfig().subscribe(config => {
+      if (config) {
+        this.configPlaylist = config;
+      }
+    });
+  }
+
+  async salvarConfigPlaylist() {
+    await this.louvorService.savePlaylistConfig(this.configPlaylist);
+    this.showToast('Links da playlist salvos!');
   }
 
   async salvarLouvor() {
@@ -182,6 +243,21 @@ export class AdminComponent implements OnInit {
   cancelarEdicao() {
     this.editando = false;
     this.novoLouvor = { titulo: '', artista: '', tema: 'Ceia', linkCifra: '', linkLetra: '', linkYoutube: '', linkSpotify: '', linkYoutubeMusic: '' };
+  }
+
+  async togglePlaylist(louvor: Louvor) {
+    const isAdding = !louvor.inPlaylist;
+    const updatedLouvor = { ...louvor, inPlaylist: isAdding };
+    await this.louvorService.updateLouvor(updatedLouvor);
+    
+    this.showToast(isAdding ? 'Louvor adicionado à playlist!' : 'Louvor removido da playlist!');
+  }
+
+  showToast(message: string) {
+    this.toastMessage = message;
+    setTimeout(() => {
+      this.toastMessage = '';
+    }, 3000);
   }
 
   async deletarLouvor(id: string) {

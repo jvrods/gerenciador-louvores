@@ -1,7 +1,13 @@
 import { Injectable, inject } from '@angular/core';
-import { Firestore, collection, collectionData, addDoc, doc, deleteDoc, updateDoc } from '@angular/fire/firestore';
+import { Firestore, collection, collectionData, addDoc, doc, deleteDoc, updateDoc, docData, setDoc } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 import { Louvor } from '../models/louvor.model';
+
+export interface PlaylistConfig {
+  youtube?: string;
+  ytmusic?: string;
+  spotify?: string;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -28,5 +34,15 @@ export class LouvorService {
   updateLouvor(louvor: Louvor) {
     const docRef = doc(this.firestore, `louvores/${louvor.id}`);
     return updateDoc(docRef, { ...louvor });
+  }
+
+  getPlaylistConfig(): Observable<PlaylistConfig> {
+    const docRef = doc(this.firestore, 'config/playlist');
+    return docData(docRef) as Observable<PlaylistConfig>;
+  }
+
+  savePlaylistConfig(config: PlaylistConfig) {
+    const docRef = doc(this.firestore, 'config/playlist');
+    return setDoc(docRef, config, { merge: true });
   }
 }
