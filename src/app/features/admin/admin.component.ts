@@ -57,6 +57,11 @@ import { Observable } from 'rxjs';
           </div>
 
           <div class="form-group">
+            <label>Link da Letra (Opcional)</label>
+            <input type="url" [(ngModel)]="novoLouvor.linkLetra" name="linkLetra" placeholder="https://...">
+          </div>
+
+          <div class="form-group">
             <label>Link do Spotify (Opcional)</label>
             <input type="url" [(ngModel)]="novoLouvor.linkSpotify" name="linkSpotify" placeholder="https://open.spotify.com/...">
           </div>
@@ -145,6 +150,7 @@ export class AdminComponent implements OnInit {
     artista: '',
     tema: 'Ceia',
     linkCifra: '',
+    linkLetra: '',
     linkYoutube: '',
     linkSpotify: '',
     linkYoutubeMusic: ''
@@ -175,7 +181,7 @@ export class AdminComponent implements OnInit {
 
   cancelarEdicao() {
     this.editando = false;
-    this.novoLouvor = { titulo: '', artista: '', tema: 'Ceia', linkCifra: '', linkYoutube: '', linkSpotify: '', linkYoutubeMusic: '' };
+    this.novoLouvor = { titulo: '', artista: '', tema: 'Ceia', linkCifra: '', linkLetra: '', linkYoutube: '', linkSpotify: '', linkYoutubeMusic: '' };
   }
 
   async deletarLouvor(id: string) {

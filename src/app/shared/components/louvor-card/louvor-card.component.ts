@@ -43,9 +43,11 @@ import { Louvor } from '../../../core/models/louvor.model';
         <h3>{{ louvor?.titulo }}</h3>
         <p class="artist">{{ louvor?.artista }}</p>
         <div class="actions">
-          <a [href]="louvor?.linkCifra" target="_blank" class="btn-cifra">
-            <span class="material-icons" style="font-size: 16px; margin-right: 5px;">description</span>
-            Ver Cifra
+          <a *ngIf="louvor?.linkCifra" [href]="louvor?.linkCifra" target="_blank" class="btn-action">
+            Cifra
+          </a>
+          <a *ngIf="louvor?.linkLetra" [href]="louvor?.linkLetra" target="_blank" class="btn-action btn-letra">
+            Letra
           </a>
           <div class="music-links">
             <a *ngIf="louvor?.linkSpotify" [href]="louvor?.linkSpotify" target="_blank" class="btn-icon spotify" title="Ouvir no Spotify">
@@ -163,22 +165,26 @@ import { Louvor } from '../../../core/models/louvor.model';
       align-items: center;
       gap: 10px;
     }
-    .btn-cifra {
+    .btn-action {
       display: flex;
       align-items: center;
       justify-content: center;
       background: var(--primary-color);
       color: white;
       text-decoration: none;
-      padding: 8px 15px;
+      padding: 8px 10px;
       border-radius: 6px;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 500;
       flex-grow: 1;
       transition: opacity 0.2s;
+      white-space: nowrap;
     }
-    .btn-cifra:hover {
+    .btn-action:hover {
       opacity: 0.9;
+    }
+    .btn-letra {
+      background: #4a5568;
     }
     .music-links {
       display: flex;

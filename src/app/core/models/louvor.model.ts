@@ -4,6 +4,7 @@ export interface Louvor {
   artista: string;
   tema: 'Ceia' | 'Primícias' | 'Missões' | 'Culto Solene' | string;
   linkCifra: string;
+  linkLetra?: string;
   linkYoutube?: string;
   linkSpotify?: string;
   linkYoutubeMusic?: string;

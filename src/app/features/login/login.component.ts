@@ -20,8 +20,8 @@ import { AuthService } from '../../core/services/auth.service';
 
         <form (ngSubmit)="onSubmit()">
           <div class="form-group">
-            <label for="email">E-mail</label>
-            <input type="email" id="email" [(ngModel)]="email" name="email" required>
+            <label for="username">Usuário</label>
+            <input type="text" id="username" [(ngModel)]="username" name="username" required>
           </div>
           <div class="form-group">
             <label for="password">Senha</label>
@@ -75,7 +75,7 @@ import { AuthService } from '../../core/services/auth.service';
   `]
 })
 export class LoginComponent {
-  email = '';
+  username = '';
   password = '';
   error = '';
 
@@ -84,9 +84,11 @@ export class LoginComponent {
   async onSubmit() {
     try {
       this.error = '';
-      await this.authService.login(this.email, this.password);
+      // Adiciona um domínio fictício para que o Firebase aceite como e-mail
+      const emailFormatado = `${this.username.trim()}@admin.com`;
+      await this.authService.login(emailFormatado, this.password);
     } catch (e: any) {
-      this.error = 'E-mail ou senha incorretos.';
+      this.error = 'Usuário ou senha incorretos.';
     }
   }
 }
