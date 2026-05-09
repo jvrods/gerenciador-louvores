@@ -128,10 +128,6 @@ type FiltroTema = 'todos' | 'Ceia' | 'Primícias' | 'Missões' | 'Culto Solene';
       color: white;
       padding: 15px 0;
       margin-bottom: 30px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.4);
     }
     .header-content {
       display: flex;
