@@ -49,6 +49,13 @@ import { firstValueFrom } from 'rxjs';
           <h3>Playlist Next Service</h3>
           <p style="font-size: 13px; color: var(--text-muted); margin-top: 8px; text-align: center;">Ouvir Agora</p>
         </a>
+
+        <!-- Repositório Card -->
+        <a routerLink="/repositorio" class="tema-card repositorio-card">
+          <div class="tema-icon"><span class="material-icons">library_music</span></div>
+          <h3>Repositório</h3>
+          <p style="font-size: 13px; color: var(--text-muted); margin-top: 8px; text-align: center;">Todas as Músicas</p>
+        </a>
       </div>
 
       <!-- Modal de Plataforma -->
@@ -151,6 +158,13 @@ import { firstValueFrom } from 'rxjs';
     }
     .playlist-card .tema-icon {
       background: #ff0000;
+    }
+    .repositorio-card {
+      background: linear-gradient(135deg, rgba(90,117,230,0.15) 0%, rgba(60,80,180,0.05) 100%);
+      border-color: rgba(90,117,230,0.3);
+    }
+    .repositorio-card .tema-icon {
+      background: linear-gradient(135deg, #5a75e6, #3c50b4);
     }
     .modal-overlay {
       position: fixed;
