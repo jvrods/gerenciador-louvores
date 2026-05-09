@@ -326,7 +326,7 @@ type FiltroTema = 'todos' | 'Ceia' | 'Primícias' | 'Missões' | 'Culto Solene';
     /* ── Responsive ── */
     @media (max-width: 480px) {
       .header-title h1 { font-size: 16px; }
-      .louvores-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
+      .louvores-grid { grid-template-columns: 1fr; gap: 14px; }
     }
   `]
 })
