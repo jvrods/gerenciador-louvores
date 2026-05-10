@@ -443,12 +443,17 @@ export class LouvorCardComponent {
   }
 
   abrirModal() {
-    if (!this.louvor?.letra) return;
+    if (!this.louvor?.linkLetra) return;
 
     this.modalUrl = this.louvor.linkLetra || '';
-    // Converte quebras de linha em HTML e exibe direto
-    const html = `<pre class="letra-pre">${this.escaparHtml(this.louvor.letra)}</pre>`;
-    this.modalConteudoSafe = this.sanitizer.bypassSecurityTrustHtml(html);
+    
+    if (this.louvor.letra) {
+      const html = `<pre class="letra-pre">${this.escaparHtml(this.louvor.letra)}</pre>`;
+      this.modalConteudoSafe = this.sanitizer.bypassSecurityTrustHtml(html);
+    } else {
+      this.modalConteudoSafe = null;
+    }
+    
     this.showModal = true;
   }
 
