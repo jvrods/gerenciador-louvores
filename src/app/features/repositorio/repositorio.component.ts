@@ -5,11 +5,8 @@ import { RouterLink } from '@angular/router';
 import { LouvorService } from '../../core/services/louvor.service';
 import { LouvorCardComponent } from '../../shared/components/louvor-card/louvor-card.component';
 import { Louvor } from '../../core/models/louvor.model';
-import { Observable, combineLatest, BehaviorSubject } from 'rxjs';
-import { map, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
-
-type FiltroRecurso = 'todos' | 'cifra' | 'letra' | 'video';
-type FiltroTema = 'todos' | 'Ceia' | 'Primícias' | 'Missões' | 'Culto Solene';
+import { Observable, BehaviorSubject, combineLatest } from 'rxjs';
+import { map, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
   selector: 'app-repositorio',
@@ -48,44 +45,6 @@ type FiltroTema = 'todos' | 'Ceia' | 'Primícias' | 'Missões' | 'Culto Solene';
         </button>
       </div>
 
-      <!-- Filtros por Tema -->
-      <div class="filtros-section">
-        <p class="filtros-label">
-          <span class="material-icons" style="font-size: 16px; vertical-align: middle;">label</span>
-          Tema
-        </p>
-        <div class="chips-row">
-          <button
-            *ngFor="let tema of temaOptions"
-            class="chip"
-            [class.active]="filtroTema === tema.value"
-            (click)="setFiltroTema(tema.value)"
-          >
-            <span class="material-icons chip-icon">{{ tema.icon }}</span>
-            {{ tema.label }}
-          </button>
-        </div>
-      </div>
-
-      <!-- Filtros por Recurso -->
-      <div class="filtros-section">
-        <p class="filtros-label">
-          <span class="material-icons" style="font-size: 16px; vertical-align: middle;">filter_list</span>
-          Recursos disponíveis
-        </p>
-        <div class="chips-row">
-          <button
-            *ngFor="let rec of recursoOptions"
-            class="chip"
-            [class.active]="filtroRecurso === rec.value"
-            (click)="setFiltroRecurso(rec.value)"
-          >
-            <span class="material-icons chip-icon">{{ rec.icon }}</span>
-            {{ rec.label }}
-          </button>
-        </div>
-      </div>
-
       <!-- Contador de Resultados -->
       <div class="resultado-info">
         <ng-container *ngIf="louvoresFiltrados$ | async as lista">
@@ -109,12 +68,7 @@ type FiltroTema = 'todos' | 'Ceia' | 'Primícias' | 'Missões' | 'Culto Solene';
           <div class="empty-state">
             <span class="material-icons empty-icon">search_off</span>
             <h3>Nenhuma música encontrada</h3>
-            <p *ngIf="termoBusca">Nenhum resultado para <strong>"{{ termoBusca }}"</strong>. Tente outro termo.</p>
-            <p *ngIf="!termoBusca">Nenhuma música corresponde aos filtros selecionados.</p>
-            <button class="btn btn-limpar" (click)="limparFiltros()">
-              <span class="material-icons">filter_list_off</span>
-              Limpar filtros
-            </button>
+            <p>Nenhum resultado para <strong>"{{ termoBusca }}"</strong>. Tente outro termo.</p>
           </div>
         </ng-template>
       </ng-container>
@@ -165,7 +119,7 @@ type FiltroTema = 'todos' | 'Ceia' | 'Primícias' | 'Missões' | 'Culto Solene';
     /* ── Search Bar ── */
     .search-wrapper {
       position: relative;
-      margin-bottom: 24px;
+      margin-bottom: 8px;
     }
     .search-icon {
       position: absolute;
@@ -216,59 +170,11 @@ type FiltroTema = 'todos' | 'Ceia' | 'Primícias' | 'Missões' | 'Culto Solene';
       background: rgba(255,255,255,0.1);
     }
 
-    /* ── Filter Sections ── */
-    .filtros-section {
-      margin-bottom: 16px;
-    }
-    .filtros-label {
-      font-size: 12px;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin: 0 0 8px 4px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    .chips-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .chip {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      padding: 7px 14px;
-      background: var(--card-bg);
-      border: 1.5px solid var(--card-border);
-      border-radius: 20px;
-      color: var(--text-muted);
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-family: inherit;
-      white-space: nowrap;
-    }
-    .chip:hover {
-      border-color: var(--primary-color);
-      color: var(--text-color);
-    }
-    .chip.active {
-      background: var(--primary-color);
-      border-color: var(--primary-color);
-      color: white;
-    }
-    .chip-icon {
-      font-size: 16px;
-    }
-
     /* ── Resultado Info ── */
     .resultado-info {
       font-size: 13px;
       color: var(--text-muted);
-      margin: 16px 0 20px;
+      margin: 12px 0 20px;
       min-height: 18px;
     }
     .resultado-info strong {
@@ -301,26 +207,8 @@ type FiltroTema = 'todos' | 'Ceia' | 'Primícias' | 'Missões' | 'Culto Solene';
       font-weight: 500;
     }
     .empty-state p {
-      margin: 0 0 24px;
+      margin: 0;
       font-size: 15px;
-    }
-    .btn-limpar {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: transparent;
-      border: 1.5px solid var(--card-border);
-      color: var(--text-color);
-      padding: 10px 20px;
-      border-radius: 8px;
-      font-size: 14px;
-      cursor: pointer;
-      font-family: inherit;
-      transition: background 0.2s, border-color 0.2s;
-    }
-    .btn-limpar:hover {
-      background: rgba(255,255,255,0.07);
-      border-color: var(--text-muted);
     }
 
     /* ── Responsive ── */
@@ -334,58 +222,24 @@ export class RepositorioComponent implements OnInit {
   private louvorService = inject(LouvorService);
 
   termoBusca = '';
-  filtroTema: FiltroTema = 'todos';
-  filtroRecurso: FiltroRecurso = 'todos';
-
   private busca$ = new BehaviorSubject<string>('');
-  private tema$ = new BehaviorSubject<FiltroTema>('todos');
-  private recurso$ = new BehaviorSubject<FiltroRecurso>('todos');
 
   louvoresFiltrados$!: Observable<Louvor[]>;
-
-  temaOptions: { value: FiltroTema; label: string; icon: string }[] = [
-    { value: 'todos',        label: 'Todos',        icon: 'apps' },
-    { value: 'Ceia',         label: 'Ceia',         icon: 'wine_bar' },
-    { value: 'Primícias',    label: 'Primícias',    icon: 'volunteer_activism' },
-    { value: 'Missões',      label: 'Missões',      icon: 'public' },
-    { value: 'Culto Solene', label: 'Culto Solene', icon: 'account_balance' },
-  ];
-
-  recursoOptions: { value: FiltroRecurso; label: string; icon: string }[] = [
-    { value: 'todos',  label: 'Todos',     icon: 'library_music' },
-    { value: 'cifra',  label: 'Com Cifra', icon: 'music_note' },
-    { value: 'letra',  label: 'Com Letra', icon: 'article' },
-    { value: 'video',  label: 'Com Vídeo', icon: 'play_circle' },
-  ];
 
   ngOnInit() {
     this.louvoresFiltrados$ = combineLatest([
       this.louvorService.getLouvores(),
       this.busca$.pipe(debounceTime(200), distinctUntilChanged()),
-      this.tema$,
-      this.recurso$,
     ]).pipe(
-      map(([louvores, busca, tema, recurso]) => {
+      map(([louvores, busca]) => {
         const termo = busca.trim().toLowerCase();
-
-        return louvores.filter(l => {
-          // Filtro de texto
-          const matchBusca = !termo ||
+        return louvores
+          .filter(l =>
+            !termo ||
             l.titulo.toLowerCase().includes(termo) ||
-            l.artista.toLowerCase().includes(termo);
-
-          // Filtro de tema
-          const matchTema = tema === 'todos' || l.tema === tema;
-
-          // Filtro de recurso
-          const matchRecurso =
-            recurso === 'todos' ||
-            (recurso === 'cifra' && !!l.linkCifra) ||
-            (recurso === 'letra' && !!l.linkLetra) ||
-            (recurso === 'video' && !!l.linkYoutube);
-
-          return matchBusca && matchTema && matchRecurso;
-        }).sort((a, b) => a.titulo.localeCompare(b.titulo, 'pt-BR', { sensitivity: 'base' }));
+            l.artista.toLowerCase().includes(termo)
+          )
+          .sort((a, b) => a.titulo.localeCompare(b.titulo, 'pt-BR', { sensitivity: 'base' }));
       })
     );
   }
@@ -394,28 +248,9 @@ export class RepositorioComponent implements OnInit {
     this.busca$.next(valor);
   }
 
-  setFiltroTema(tema: FiltroTema) {
-    this.filtroTema = tema;
-    this.tema$.next(tema);
-  }
-
-  setFiltroRecurso(recurso: FiltroRecurso) {
-    this.filtroRecurso = recurso;
-    this.recurso$.next(recurso);
-  }
-
   limparBusca() {
     this.termoBusca = '';
     this.busca$.next('');
-  }
-
-  limparFiltros() {
-    this.termoBusca = '';
-    this.filtroTema = 'todos';
-    this.filtroRecurso = 'todos';
-    this.busca$.next('');
-    this.tema$.next('todos');
-    this.recurso$.next('todos');
   }
 
   trackById(index: number, louvor: Louvor): string {
