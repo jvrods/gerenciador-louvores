@@ -74,7 +74,7 @@ a {
   font-weight: 500;
 }
 
-.form-group input, .form-group select {
+.form-group input, .form-group select, .form-group textarea {
   width: 100%;
   padding: 10px;
   border: 1px solid var(--card-border);

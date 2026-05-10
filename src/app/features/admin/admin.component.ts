@@ -88,10 +88,9 @@ import { Observable } from 'rxjs';
               [(ngModel)]="novoLouvor.letra"
               name="letra"
               placeholder="Cole aqui a letra da música..."
-              rows="12"
-              style="resize: vertical; font-family: monospace; font-size: 13px; line-height: 1.7;"
+              rows="8"
+              style="resize: vertical; line-height: 1.6;"
             ></textarea>
-            <small style="color: var(--text-muted); font-size: 11px;">Quando preenchida, o botão &quot;Letra&quot; exibirá este texto em um modal.</small>
           </div>
 
           <div class="form-group">
