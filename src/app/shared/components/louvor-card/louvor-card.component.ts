@@ -11,6 +11,7 @@ type TipoModal = 'cifra' | 'letra';
   standalone: true,
   imports: [CommonModule],
   template: `
+    <ng-container>
     <div class="card">
       <div class="card-image-container">
         <!-- Mostra iframe quando clica em play -->
@@ -119,6 +120,7 @@ type TipoModal = 'cifra' | 'letra';
 
       </div>
     </div>
+    </ng-container>
   `,
   styles: [`
     .card {
