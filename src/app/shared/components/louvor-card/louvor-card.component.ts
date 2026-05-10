@@ -4,8 +4,6 @@ import { DomSanitizer, SafeResourceUrl, SafeHtml } from '@angular/platform-brows
 import { Louvor } from '../../../core/models/louvor.model';
 import { LetraProxyService } from '../../../core/services/letra-proxy.service';
 
-type TipoModal = 'cifra' | 'letra';
-
 @Component({
   selector: 'app-louvor-card',
   standalone: true,
@@ -48,10 +46,10 @@ type TipoModal = 'cifra' | 'letra';
         <h3>{{ louvor?.titulo }}</h3>
         <p class="artist">{{ louvor?.artista }}</p>
         <div class="actions">
-          <button *ngIf="louvor?.linkCifra" (click)="abrirModal('cifra')" class="btn-action">
+          <a *ngIf="louvor?.linkCifra" [href]="louvor?.linkCifra" target="_blank" class="btn-action">
             Cifra
-          </button>
-          <button *ngIf="louvor?.linkLetra" (click)="abrirModal('letra')" class="btn-action btn-letra">
+          </a>
+          <button *ngIf="louvor?.linkLetra" (click)="abrirModal()" class="btn-action btn-letra">
             Letra
           </button>
           <div class="music-links">
@@ -77,7 +75,7 @@ type TipoModal = 'cifra' | 'letra';
         <!-- Header do Modal -->
         <div class="modal-header">
           <div class="modal-titulo">
-            <span class="material-icons modal-tipo-icon">{{ tipoModal === 'letra' ? 'article' : 'music_note' }}</span>
+            <span class="material-icons modal-tipo-icon">article</span>
             <div>
               <h2>{{ louvor?.titulo }}</h2>
               <p class="modal-artista">{{ louvor?.artista }}</p>
@@ -93,7 +91,7 @@ type TipoModal = 'cifra' | 'letra';
           <!-- Loading -->
           <div *ngIf="modalLoading" class="modal-loading">
             <div class="spinner"></div>
-            <p>Carregando {{ tipoModal === 'letra' ? 'letra' : 'cifra' }}...</p>
+            <p>Carregando letra...</p>
           </div>
 
           <!-- Erro -->
@@ -433,7 +431,6 @@ export class LouvorCardComponent {
 
   // Estado do modal
   showModal = false;
-  tipoModal: TipoModal = 'letra';
   modalUrl = '';
   modalLoading = false;
   modalErro = '';
@@ -444,11 +441,10 @@ export class LouvorCardComponent {
     if (this.showModal) this.fecharModal();
   }
 
-  async abrirModal(tipo: TipoModal) {
-    const url = tipo === 'letra' ? this.louvor?.linkLetra : this.louvor?.linkCifra;
+  async abrirModal() {
+    const url = this.louvor?.linkLetra;
     if (!url) return;
 
-    this.tipoModal = tipo;
     this.modalUrl = url;
     this.showModal = true;
     this.modalLoading = true;

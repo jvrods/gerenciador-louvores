@@ -14,11 +14,9 @@ export class LetraProxyService {
   private readonly CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 horas
 
   async buscarConteudo(url: string): Promise<ConteudoMusica> {
-    // 1. Verificar cache local
     const cached = this.getFromCache(url);
     if (cached) return cached;
 
-    // 2. Chamar o proxy Vercel
     const response = await fetch('/api/proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -31,13 +29,8 @@ export class LetraProxyService {
     }
 
     const { html } = await response.json();
-
-    // 3. Extrair conteúdo relevante do HTML
     const conteudo = this.extrairConteudo(html, url);
-
-    // 4. Salvar no cache
     this.salvarNoCache(url, conteudo);
-
     return conteudo;
   }
 
@@ -45,9 +38,12 @@ export class LetraProxyService {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
 
-    // Remove elementos indesejados
-    doc.querySelectorAll('script, style, iframe, noscript, header, footer, nav, aside, .adv, [class*="banner"], [class*="pub"], [id*="ad"]')
-      .forEach(el => el.remove());
+    // Remove elementos que poluem o conteúdo
+    doc.querySelectorAll(
+      'script, style, iframe, noscript, header, footer, nav, aside, ' +
+      '.adv, .ad, [class*="banner"], [class*="pub"], [id*="ad"], ' +
+      '[class*="social"], [class*="share"], [class*="related"], [class*="comment"]'
+    ).forEach(el => el.remove());
 
     const hostname = new URL(url).hostname;
     let htmlExtraido = '';
@@ -58,18 +54,41 @@ export class LetraProxyService {
       htmlExtraido = this.extrairCifraClub(doc);
     }
 
+    // Fallback genérico — tenta encontrar o maior bloco de texto da página
+    if (!htmlExtraido) {
+      htmlExtraido = this.extrairFallback(doc);
+    }
+
     return {
-      html: htmlExtraido || '<p style="color: var(--text-muted);">Não foi possível extrair o conteúdo desta página.</p>',
+      html: htmlExtraido || '<p>Não foi possível extrair o conteúdo desta página.</p>',
       fonte: hostname,
       urlOrigem: url,
     };
   }
 
   private extrairLetrasMusBr(doc: Document): string {
-    const seletores = ['.cnt-letra', 'article.cnt-letra', '[class*="letra-cnt"]', '[itemprop="description"]'];
+    // Seletores em ordem de prioridade para letras.mus.br
+    const seletores = [
+      '.cnt-letra',
+      'article.cnt-letra',
+      '[class="cnt-letra"]',
+      '[class*="cnt-letra"]',
+      '.lyric-original',
+      '.letra-original',
+      '[class*="lyric"]',
+      '[class*="letra"]',
+      'article[itemprop="text"]',
+      '[itemprop="text"]',
+      'article[itemprop="description"]',
+      '[itemprop="description"]',
+      'article p',
+    ];
+
     for (const sel of seletores) {
       const el = doc.querySelector(sel);
-      if (el && el.textContent?.trim()) {
+      if (el && el.textContent && el.textContent.trim().length > 100) {
+        // Limpa atributos de estilo e classes desnecessárias
+        this.limparAtributos(el);
         return el.innerHTML;
       }
     }
@@ -77,15 +96,58 @@ export class LetraProxyService {
   }
 
   private extrairCifraClub(doc: Document): string {
-    const seletores = ['.cifra_cnt', '[class*="cifra-cnt"]', 'article pre', 'pre'];
+    const seletores = [
+      '.cifra_cnt',
+      '[class*="cifra-cnt"]',
+      '[class*="cifra_cnt"]',
+      'article pre',
+      'pre',
+      '[class*="cifra"]',
+    ];
+
     for (const sel of seletores) {
       const el = doc.querySelector(sel);
-      if (el && el.textContent?.trim()) {
+      if (el && el.textContent && el.textContent.trim().length > 50) {
         const texto = el.textContent || '';
         return `<pre class="cifra-pre">${texto}</pre>`;
       }
     }
     return '';
+  }
+
+  // Fallback: encontra o maior bloco de parágrafos contínuos na página
+  private extrairFallback(doc: Document): string {
+    const candidates = doc.querySelectorAll('div, article, section, main');
+    let best: Element | null = null;
+    let bestLen = 0;
+
+    candidates.forEach(el => {
+      const paragraphs = el.querySelectorAll('p');
+      if (paragraphs.length < 3) return;
+
+      const text = Array.from(paragraphs)
+        .map(p => p.textContent?.trim() || '')
+        .join('\n');
+
+      if (text.length > bestLen) {
+        bestLen = text.length;
+        best = el;
+      }
+    });
+
+    if (best && bestLen > 150) {
+      this.limparAtributos(best);
+      return (best as Element).innerHTML;
+    }
+    return '';
+  }
+
+  private limparAtributos(el: Element): void {
+    el.querySelectorAll('*').forEach(child => {
+      child.removeAttribute('style');
+      child.removeAttribute('class');
+      child.removeAttribute('id');
+    });
   }
 
   private getFromCache(url: string): ConteudoMusica | null {
