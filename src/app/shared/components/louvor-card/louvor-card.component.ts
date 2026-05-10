@@ -48,7 +48,7 @@ import { Louvor } from '../../../core/models/louvor.model';
           <a *ngIf="louvor?.linkCifra" [href]="louvor?.linkCifra" target="_blank" class="btn-action">
             Cifra
           </a>
-          <button *ngIf="louvor?.letra" (click)="abrirModal()" class="btn-action btn-letra">
+          <button *ngIf="louvor?.linkLetra" (click)="abrirModal()" class="btn-action btn-letra">
             Letra
           </button>
           <div class="music-links">
@@ -87,10 +87,15 @@ import { Louvor } from '../../../core/models/louvor.model';
 
         <!-- Conteúdo do Modal -->
         <div class="modal-body">
-          <!-- Conteúdo -->
+          <!-- Conteúdo ou estado vazio -->
           <div *ngIf="modalConteudoSafe"
                class="modal-conteudo"
                [innerHTML]="modalConteudoSafe">
+          </div>
+          <div *ngIf="!modalConteudoSafe" class="modal-vazio">
+            <span class="material-icons" style="font-size: 48px; opacity: 0.2;">article</span>
+            <p>Letra ainda não disponível.</p>
+            <p style="font-size: 13px;">Use o link abaixo para ver no site original.</p>
           </div>
         </div>
 
@@ -380,6 +385,19 @@ import { Louvor } from '../../../core/models/louvor.model';
       white-space: pre-wrap;
       line-height: 1.6;
       color: var(--text-color);
+    }
+
+    /* Estado vazio (letra não cadastrada) */
+    .modal-vazio {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--text-muted);
+      gap: 8px;
+      min-height: 160px;
     }
 
     /* Footer */
