@@ -28,13 +28,23 @@ export class LetraProxyService {
       throw new Error(err.error || `Erro ${response.status}`);
     }
 
-    const { html } = await response.json();
-    const conteudo = this.extrairConteudo(html, url);
+    const { html, debug } = await response.json();
+
+    // Log de diagnóstico — ver no console do browser
+    if (debug) {
+      console.group('[LetraProxy] Debug');
+      console.log('Título da página:', debug.title);
+      console.log('Classes encontradas:', debug.classes);
+      console.log('Preview do texto:', debug.bodyPreview);
+      console.groupEnd();
+    }
+
+    const conteudo = this.extrairConteudo(html, url, debug?.bodyPreview);
     this.salvarNoCache(url, conteudo);
     return conteudo;
   }
 
-  private extrairConteudo(html: string, url: string): ConteudoMusica {
+  private extrairConteudo(html: string, url: string, bodyPreview?: string): ConteudoMusica {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
 
@@ -60,7 +70,8 @@ export class LetraProxyService {
     }
 
     return {
-      html: htmlExtraido || '<p>Não foi possível extrair o conteúdo desta página.</p>',
+      html: htmlExtraido
+        || (bodyPreview ? `<pre style="white-space:pre-wrap;font-size:13px;opacity:0.8">${bodyPreview}</pre><p style="font-size:11px;opacity:0.5;margin-top:12px">⚠️ Exibição parcial — use o link abaixo para ver completo.</p>` : '<p>Não foi possível extrair o conteúdo desta página.</p>'),
       fonte: hostname,
       urlOrigem: url,
     };

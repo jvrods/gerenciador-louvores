@@ -69,7 +69,23 @@ export default async function handler(req, res) {
     }
 
     const html = await response.text();
-    return res.status(200).json({ html, url });
+
+    // Debug info: título da página e primeiros elementos com classe
+    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    const classMatches = [...html.matchAll(/class="([^"]{3,40})"/g)]
+      .map(m => m[1])
+      .filter((v, i, a) => a.indexOf(v) === i)
+      .slice(0, 30);
+
+    return res.status(200).json({
+      html,
+      url,
+      debug: {
+        title: titleMatch?.[1] || 'sem título',
+        classes: classMatches,
+        bodyPreview: html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').slice(0, 500),
+      }
+    });
   } catch (error) {
     if (error.name === 'AbortError') {
       return res.status(504).json({ error: 'Timeout ao buscar conteúdo (10s)' });
