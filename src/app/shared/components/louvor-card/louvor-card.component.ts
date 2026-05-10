@@ -452,10 +452,14 @@ export class LouvorCardComponent {
     this.modalConteudoSafe = null;
 
     try {
-      const conteudo = await this.letraProxy.buscarConteudo(url);
+      const conteudo = await this.letraProxy.buscarLetra(
+        this.louvor.artista,
+        this.louvor.titulo,
+        url
+      );
       this.modalConteudoSafe = this.sanitizer.bypassSecurityTrustHtml(conteudo.html);
     } catch (err: any) {
-      this.modalErro = err?.message || 'Não foi possível carregar o conteúdo.';
+      this.modalErro = err?.message || 'Não foi possível carregar a letra.';
     } finally {
       this.modalLoading = false;
     }

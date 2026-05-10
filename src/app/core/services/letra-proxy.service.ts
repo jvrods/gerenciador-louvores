@@ -10,166 +10,63 @@ export interface ConteudoMusica {
   providedIn: 'root'
 })
 export class LetraProxyService {
-  private readonly CACHE_PREFIX = 'gl_conteudo_';
-  private readonly CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 horas
+  private readonly CACHE_PREFIX = 'gl_letra_';
+  private readonly CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 dias
 
-  async buscarConteudo(url: string): Promise<ConteudoMusica> {
-    const cached = this.getFromCache(url);
+  /**
+   * Busca a letra usando a API pública lyrics.ovh (sem proxy, sem CORS).
+   * Fallback: retorna link para o site original.
+   */
+  async buscarLetra(artista: string, titulo: string, urlOrigem: string): Promise<ConteudoMusica> {
+    const cacheKey = `${artista}::${titulo}`;
+    const cached = this.getFromCache(cacheKey);
     if (cached) return cached;
 
-    const response = await fetch('/api/proxy', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url }),
-    });
+    try {
+      const url = `https://api.lyrics.ovh/v1/${encodeURIComponent(artista)}/${encodeURIComponent(titulo)}`;
+      const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
 
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
-      throw new Error(err.error || `Erro ${response.status}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.lyrics && data.lyrics.trim().length > 10) {
+          const html = `<pre class="letra-pre">${this.limparLetra(data.lyrics)}</pre>`;
+          const conteudo: ConteudoMusica = { html, fonte: 'lyrics.ovh', urlOrigem };
+          this.salvarNoCache(cacheKey, conteudo);
+          return conteudo;
+        }
+      }
+    } catch (e) {
+      console.warn('[LetraProxy] lyrics.ovh falhou:', e);
     }
 
-    const { html, debug } = await response.json();
-
-    // Log de diagnóstico — ver no console do browser
-    if (debug) {
-      console.group('[LetraProxy] Debug');
-      console.log('Título da página:', debug.title);
-      console.log('Classes encontradas:', debug.classes);
-      console.log('Preview do texto:', debug.bodyPreview);
-      console.groupEnd();
-    }
-
-    const conteudo = this.extrairConteudo(html, url, debug?.bodyPreview);
-    this.salvarNoCache(url, conteudo);
-    return conteudo;
-  }
-
-  private extrairConteudo(html: string, url: string, bodyPreview?: string): ConteudoMusica {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-
-    // Remove elementos que poluem o conteúdo
-    doc.querySelectorAll(
-      'script, style, iframe, noscript, header, footer, nav, aside, ' +
-      '.adv, .ad, [class*="banner"], [class*="pub"], [id*="ad"], ' +
-      '[class*="social"], [class*="share"], [class*="related"], [class*="comment"]'
-    ).forEach(el => el.remove());
-
-    const hostname = new URL(url).hostname;
-    let htmlExtraido = '';
-
-    if (hostname.includes('letras.mus.br')) {
-      htmlExtraido = this.extrairLetrasMusBr(doc);
-    } else if (hostname.includes('cifraclub.com.br')) {
-      htmlExtraido = this.extrairCifraClub(doc);
-    }
-
-    // Fallback genérico — tenta encontrar o maior bloco de texto da página
-    if (!htmlExtraido) {
-      htmlExtraido = this.extrairFallback(doc);
-    }
-
+    // Não encontrou — retorna mensagem com link para site original
     return {
-      html: htmlExtraido
-        || (bodyPreview ? `<pre style="white-space:pre-wrap;font-size:13px;opacity:0.8">${bodyPreview}</pre><p style="font-size:11px;opacity:0.5;margin-top:12px">⚠️ Exibição parcial — use o link abaixo para ver completo.</p>` : '<p>Não foi possível extrair o conteúdo desta página.</p>'),
-      fonte: hostname,
-      urlOrigem: url,
+      html: `
+        <div style="text-align:center; padding: 20px 0; color: var(--text-muted);">
+          <span class="material-icons" style="font-size:48px; opacity:0.3; display:block; margin-bottom:12px;">search_off</span>
+          <p>Letra não encontrada automaticamente para<br><strong style="color:var(--text-color)">"${titulo}"</strong>.</p>
+          <p style="font-size:13px; margin-top:8px;">Use o link abaixo para ver no site original.</p>
+        </div>`,
+      fonte: 'não encontrado',
+      urlOrigem,
     };
   }
 
-  private extrairLetrasMusBr(doc: Document): string {
-    // Seletores em ordem de prioridade para letras.mus.br
-    const seletores = [
-      '.cnt-letra',
-      'article.cnt-letra',
-      '[class="cnt-letra"]',
-      '[class*="cnt-letra"]',
-      '.lyric-original',
-      '.letra-original',
-      '[class*="lyric"]',
-      '[class*="letra"]',
-      'article[itemprop="text"]',
-      '[itemprop="text"]',
-      'article[itemprop="description"]',
-      '[itemprop="description"]',
-      'article p',
-    ];
-
-    for (const sel of seletores) {
-      const el = doc.querySelector(sel);
-      if (el && el.textContent && el.textContent.trim().length > 100) {
-        // Limpa atributos de estilo e classes desnecessárias
-        this.limparAtributos(el);
-        return el.innerHTML;
-      }
-    }
-    return '';
+  private limparLetra(texto: string): string {
+    return texto
+      .replace(/\r\n/g, '\n')
+      .replace(/\n{3,}/g, '\n\n') // máximo 2 linhas em branco seguidas
+      .trim();
   }
 
-  private extrairCifraClub(doc: Document): string {
-    const seletores = [
-      '.cifra_cnt',
-      '[class*="cifra-cnt"]',
-      '[class*="cifra_cnt"]',
-      'article pre',
-      'pre',
-      '[class*="cifra"]',
-    ];
-
-    for (const sel of seletores) {
-      const el = doc.querySelector(sel);
-      if (el && el.textContent && el.textContent.trim().length > 50) {
-        const texto = el.textContent || '';
-        return `<pre class="cifra-pre">${texto}</pre>`;
-      }
-    }
-    return '';
-  }
-
-  // Fallback: encontra o maior bloco de parágrafos contínuos na página
-  private extrairFallback(doc: Document): string {
-    const candidates = doc.querySelectorAll('div, article, section, main');
-    let best: Element | null = null;
-    let bestLen = 0;
-
-    candidates.forEach(el => {
-      const paragraphs = el.querySelectorAll('p');
-      if (paragraphs.length < 3) return;
-
-      const text = Array.from(paragraphs)
-        .map(p => p.textContent?.trim() || '')
-        .join('\n');
-
-      if (text.length > bestLen) {
-        bestLen = text.length;
-        best = el;
-      }
-    });
-
-    if (best && bestLen > 150) {
-      this.limparAtributos(best);
-      return (best as Element).innerHTML;
-    }
-    return '';
-  }
-
-  private limparAtributos(el: Element): void {
-    el.querySelectorAll('*').forEach(child => {
-      child.removeAttribute('style');
-      child.removeAttribute('class');
-      child.removeAttribute('id');
-    });
-  }
-
-  private getFromCache(url: string): ConteudoMusica | null {
+  private getFromCache(key: string): ConteudoMusica | null {
     try {
-      const key = this.CACHE_PREFIX + btoa(encodeURIComponent(url));
-      const item = localStorage.getItem(key);
+      const cacheKey = this.CACHE_PREFIX + btoa(encodeURIComponent(key));
+      const item = localStorage.getItem(cacheKey);
       if (!item) return null;
-
       const { conteudo, timestamp } = JSON.parse(item);
       if (Date.now() - timestamp > this.CACHE_TTL_MS) {
-        localStorage.removeItem(key);
+        localStorage.removeItem(cacheKey);
         return null;
       }
       return conteudo;
@@ -178,12 +75,10 @@ export class LetraProxyService {
     }
   }
 
-  private salvarNoCache(url: string, conteudo: ConteudoMusica): void {
+  private salvarNoCache(key: string, conteudo: ConteudoMusica): void {
     try {
-      const key = this.CACHE_PREFIX + btoa(encodeURIComponent(url));
-      localStorage.setItem(key, JSON.stringify({ conteudo, timestamp: Date.now() }));
-    } catch {
-      // localStorage cheio ou indisponível — ignora silenciosamente
-    }
+      const cacheKey = this.CACHE_PREFIX + btoa(encodeURIComponent(key));
+      localStorage.setItem(cacheKey, JSON.stringify({ conteudo, timestamp: Date.now() }));
+    } catch { /* localStorage cheio */ }
   }
 }
