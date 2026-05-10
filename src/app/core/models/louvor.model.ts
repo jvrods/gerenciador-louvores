@@ -5,9 +5,10 @@ export interface Louvor {
   tema: 'Ceia' | 'Primícias' | 'Missões' | 'Culto Solene' | string;
   linkCifra: string;
   linkLetra?: string;
+  letra?: string;        // Texto completo da letra armazenado no Firestore
   linkYoutube?: string;
   linkSpotify?: string;
   linkYoutubeMusic?: string;
-  imagemUrl?: string; // Mantido como fallback caso não haja Youtube
+  imagemUrl?: string;
   inPlaylist?: boolean;
 }

@@ -83,6 +83,18 @@ import { Observable } from 'rxjs';
           </div>
 
           <div class="form-group">
+            <label>Letra Completa (Cole aqui o texto da música)</label>
+            <textarea
+              [(ngModel)]="novoLouvor.letra"
+              name="letra"
+              placeholder="Cole aqui a letra da música..."
+              rows="12"
+              style="resize: vertical; font-family: monospace; font-size: 13px; line-height: 1.7;"
+            ></textarea>
+            <small style="color: var(--text-muted); font-size: 11px;">Quando preenchida, o botão &quot;Letra&quot; exibirá este texto em um modal.</small>
+          </div>
+
+          <div class="form-group">
             <label>Link do Spotify (Opcional)</label>
             <input type="url" [(ngModel)]="novoLouvor.linkSpotify" name="linkSpotify" placeholder="https://open.spotify.com/...">
           </div>
@@ -202,6 +214,7 @@ export class AdminComponent implements OnInit {
     tema: 'Ceia',
     linkCifra: '',
     linkLetra: '',
+    letra: '',
     linkYoutube: '',
     linkSpotify: '',
     linkYoutubeMusic: ''
@@ -242,7 +255,7 @@ export class AdminComponent implements OnInit {
 
   cancelarEdicao() {
     this.editando = false;
-    this.novoLouvor = { titulo: '', artista: '', tema: 'Ceia', linkCifra: '', linkLetra: '', linkYoutube: '', linkSpotify: '', linkYoutubeMusic: '' };
+    this.novoLouvor = { titulo: '', artista: '', tema: 'Ceia', linkCifra: '', linkLetra: '', letra: '', linkYoutube: '', linkSpotify: '', linkYoutubeMusic: '' };
   }
 
   async togglePlaylist(louvor: Louvor) {

@@ -2,7 +2,6 @@ import { Component, Input, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl, SafeHtml } from '@angular/platform-browser';
 import { Louvor } from '../../../core/models/louvor.model';
-import { LetraProxyService } from '../../../core/services/letra-proxy.service';
 
 @Component({
   selector: 'app-louvor-card',
@@ -49,7 +48,7 @@ import { LetraProxyService } from '../../../core/services/letra-proxy.service';
           <a *ngIf="louvor?.linkCifra" [href]="louvor?.linkCifra" target="_blank" class="btn-action">
             Cifra
           </a>
-          <button *ngIf="louvor?.linkLetra" (click)="abrirModal()" class="btn-action btn-letra">
+          <button *ngIf="louvor?.letra" (click)="abrirModal()" class="btn-action btn-letra">
             Letra
           </button>
           <div class="music-links">
@@ -88,21 +87,8 @@ import { LetraProxyService } from '../../../core/services/letra-proxy.service';
 
         <!-- Conteúdo do Modal -->
         <div class="modal-body">
-          <!-- Loading -->
-          <div *ngIf="modalLoading" class="modal-loading">
-            <div class="spinner"></div>
-            <p>Carregando letra...</p>
-          </div>
-
-          <!-- Erro -->
-          <div *ngIf="modalErro && !modalLoading" class="modal-erro">
-            <span class="material-icons" style="font-size: 48px; color: rgba(255,255,255,0.2);">wifi_off</span>
-            <p>{{ modalErro }}</p>
-            <p style="font-size: 13px; color: var(--text-muted);">Isso pode acontecer em ambiente local. Em produção o proxy estará disponível.</p>
-          </div>
-
           <!-- Conteúdo -->
-          <div *ngIf="!modalLoading && !modalErro && modalConteudoSafe"
+          <div *ngIf="modalConteudoSafe"
                class="modal-conteudo"
                [innerHTML]="modalConteudoSafe">
           </div>
@@ -424,7 +410,6 @@ import { LetraProxyService } from '../../../core/services/letra-proxy.service';
 export class LouvorCardComponent {
   @Input() louvor!: Louvor;
   private sanitizer = inject(DomSanitizer);
-  private letraProxy = inject(LetraProxyService);
 
   // Estado do vídeo
   playingVideo = false;
@@ -432,8 +417,6 @@ export class LouvorCardComponent {
   // Estado do modal
   showModal = false;
   modalUrl = '';
-  modalLoading = false;
-  modalErro = '';
   modalConteudoSafe: SafeHtml | null = null;
 
   @HostListener('document:keydown.escape')
@@ -441,34 +424,26 @@ export class LouvorCardComponent {
     if (this.showModal) this.fecharModal();
   }
 
-  async abrirModal() {
-    const url = this.louvor?.linkLetra;
-    if (!url) return;
+  abrirModal() {
+    if (!this.louvor?.letra) return;
 
-    this.modalUrl = url;
+    this.modalUrl = this.louvor.linkLetra || '';
+    // Converte quebras de linha em HTML e exibe direto
+    const html = `<pre class="letra-pre">${this.escaparHtml(this.louvor.letra)}</pre>`;
+    this.modalConteudoSafe = this.sanitizer.bypassSecurityTrustHtml(html);
     this.showModal = true;
-    this.modalLoading = true;
-    this.modalErro = '';
-    this.modalConteudoSafe = null;
+  }
 
-    try {
-      const conteudo = await this.letraProxy.buscarLetra(
-        this.louvor.artista,
-        this.louvor.titulo,
-        url
-      );
-      this.modalConteudoSafe = this.sanitizer.bypassSecurityTrustHtml(conteudo.html);
-    } catch (err: any) {
-      this.modalErro = err?.message || 'Não foi possível carregar a letra.';
-    } finally {
-      this.modalLoading = false;
-    }
+  private escaparHtml(texto: string): string {
+    return texto
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
   }
 
   fecharModal() {
     this.showModal = false;
     this.modalConteudoSafe = null;
-    this.modalErro = '';
   }
 
   onImageClick(event: Event) {
