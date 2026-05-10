@@ -258,8 +258,8 @@ import { Louvor } from '../../../core/models/louvor.model';
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(6px);
+      background: rgba(0, 0, 0, 0.95);
+      backdrop-filter: blur(8px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -267,9 +267,9 @@ import { Louvor } from '../../../core/models/louvor.model';
       padding: 16px;
     }
     .modal-box {
-      background: var(--card-bg, #1a1128);
-      border: 1px solid var(--card-border, rgba(255,255,255,0.1));
-      border-radius: 16px;
+      background: #150e20;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
       width: 100%;
       max-width: 680px;
       max-height: 90vh;
@@ -373,18 +373,21 @@ import { Louvor } from '../../../core/models/louvor.model';
     .modal-conteudo {
       color: var(--text-color);
       line-height: 1.8;
-      font-size: 15px;
+      font-size: 17px;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     }
     .modal-conteudo p {
       margin: 0 0 16px;
     }
     .modal-conteudo :global(.cifra-pre),
     .modal-conteudo pre {
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 13px;
+      font-family: 'Georgia', 'Times New Roman', serif;
+      font-size: 18px;
       white-space: pre-wrap;
-      line-height: 1.6;
-      color: var(--text-color);
+      line-height: 1.8;
+      color: #f0f0f0;
+      margin: 0;
+      letter-spacing: 0.3px;
     }
 
     /* Estado vazio (letra não cadastrada) */
