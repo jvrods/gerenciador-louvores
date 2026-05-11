@@ -462,7 +462,7 @@ import { ActivatedRoute, Router } from '@angular/router';
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
       transition: bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      z-index: 1000;
+      z-index: 10001;
       font-weight: 500;
       pointer-events: none;
     }
