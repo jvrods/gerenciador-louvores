@@ -590,8 +590,9 @@ export class RepositorioComponent implements OnInit {
     this.isSubmitting = true;
     try {
       await this.louvorService.addSuggestion(this.novaSugestao);
-      this.showToast('Sugestão enviada com sucesso! Obrigado.');
-      this.fecharModalSugestao();
+      this.showToast('Sugestão Registrada! Muito Obrigado');
+      // Reseta o formulário para uma nova sugestão sem fechar o modal
+      this.novaSugestao = { titulo: '', artista: '', linkYoutube: '', tema: 'Geral', linkCifra: '' };
     } catch (error) {
       console.error('Erro ao enviar sugestão:', error);
       this.showToast('Erro ao enviar sugestão. Tente novamente.');
