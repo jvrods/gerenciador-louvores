@@ -7,6 +7,7 @@ import { LouvorCardComponent } from '../../shared/components/louvor-card/louvor-
 import { Louvor } from '../../core/models/louvor.model';
 import { Observable, BehaviorSubject, combineLatest } from 'rxjs';
 import { map, debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-repositorio',
@@ -481,6 +482,7 @@ import { map, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 })
 export class RepositorioComponent implements OnInit {
   private louvorService = inject(LouvorService);
+  private route = inject(ActivatedRoute);
 
   termoBusca = '';
   verSugestoes = false;
@@ -496,6 +498,13 @@ export class RepositorioComponent implements OnInit {
   novaSugestao: Partial<Louvor> = { titulo: '', artista: '', linkYoutube: '', tema: 'Geral', linkCifra: '' };
 
   ngOnInit() {
+    // Verifica se deve abrir o modal de sugestão via URL (?sugerir=true)
+    this.route.queryParams.subscribe(params => {
+      if (params['sugerir'] === 'true') {
+        this.abrirModalSugestao();
+      }
+    });
+
     this.louvoresFiltrados$ = combineLatest([
       this.louvorService.getLouvores(),
       this.busca$.pipe(debounceTime(200), distinctUntilChanged()),
