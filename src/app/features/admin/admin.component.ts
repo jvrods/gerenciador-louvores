@@ -48,17 +48,17 @@ import { Observable } from 'rxjs';
         <h2>{{ editando ? 'Editar Louvor' : 'Adicionar Novo Louvor' }}</h2>
         <form (ngSubmit)="salvarLouvor()">
           <div class="form-group">
-            <label>Título</label>
+            <label>Título <span class="required-asterisk">*</span></label>
             <input type="text" [(ngModel)]="novoLouvor.titulo" name="titulo" required>
           </div>
           
           <div class="form-group">
-            <label>Artista</label>
+            <label>Artista <span class="required-asterisk">*</span></label>
             <input type="text" [(ngModel)]="novoLouvor.artista" name="artista" required>
           </div>
 
           <div class="form-group">
-            <label>Tema/Culto</label>
+            <label>Tema/Culto <span class="required-asterisk">*</span></label>
             <select [(ngModel)]="novoLouvor.tema" name="tema" required>
               <option value="Ceia">Ceia</option>
               <option value="Primícias">Primícias</option>
@@ -73,8 +73,8 @@ import { Observable } from 'rxjs';
           </div>
 
           <div class="form-group">
-            <label>Link da Cifra (Redirecionamento)</label>
-            <input type="url" [(ngModel)]="novoLouvor.linkCifra" name="linkCifra" required placeholder="https://...">
+            <label>Link da Cifra (Opcional)</label>
+            <input type="url" [(ngModel)]="novoLouvor.linkCifra" name="linkCifra" placeholder="https://...">
           </div>
 
           <div class="form-group">
@@ -194,6 +194,10 @@ import { Observable } from 'rxjs';
     .toast.show {
       bottom: 20px;
     }
+    .required-asterisk {
+      color: #ff4444;
+      font-weight: bold;
+    }
   `]
 })
 export class AdminComponent implements OnInit {
@@ -234,16 +238,27 @@ export class AdminComponent implements OnInit {
   }
 
   async salvarLouvor() {
-    if (this.novoLouvor.titulo && this.novoLouvor.artista && this.novoLouvor.linkCifra) {
-      if (this.editando && this.novoLouvor.id) {
-        await this.louvorService.updateLouvor(this.novoLouvor);
-        alert('Louvor atualizado com sucesso!');
-      } else {
-        await this.louvorService.addLouvor(this.novoLouvor);
-        alert('Louvor adicionado com sucesso!');
-      }
-      this.cancelarEdicao();
+    if (!this.novoLouvor.titulo || !this.novoLouvor.titulo.trim()) {
+      alert('Erro: O campo "Título" é obrigatório.');
+      return;
     }
+    if (!this.novoLouvor.artista || !this.novoLouvor.artista.trim()) {
+      alert('Erro: O campo "Artista" é obrigatório.');
+      return;
+    }
+    if (!this.novoLouvor.tema) {
+      alert('Erro: O campo "Tema/Culto" é obrigatório.');
+      return;
+    }
+
+    if (this.editando && this.novoLouvor.id) {
+      await this.louvorService.updateLouvor(this.novoLouvor);
+      alert('Louvor atualizado com sucesso!');
+    } else {
+      await this.louvorService.addLouvor(this.novoLouvor);
+      alert('Louvor adicionado com sucesso!');
+    }
+    this.cancelarEdicao();
   }
 
   editarLouvor(louvor: Louvor) {

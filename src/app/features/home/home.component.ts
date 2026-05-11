@@ -2,12 +2,14 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { LouvorService, PlaylistConfig } from '../../core/services/louvor.service';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Observable, map } from 'rxjs';
+import { LouvorCardComponent } from '../../shared/components/louvor-card/louvor-card.component';
+import { Louvor } from '../../core/models/louvor.model';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, LouvorCardComponent],
   template: `
     <header class="header">
       <div class="container header-content">
@@ -22,7 +24,28 @@ import { firstValueFrom } from 'rxjs';
     <main class="container">
       <h2 style="text-align: center; margin-bottom: 30px; font-weight: 400;">Selecione o Culto/Tema</h2>
       
+      <!-- Seção Playlist -->
+      <ng-container *ngIf="playlistSongs$ | async as playlistSongs">
+        <section *ngIf="playlistSongs.length > 0" class="playlist-section">
+          <div class="playlist-header">
+            <span class="material-icons" style="color: #ffb800; font-size: 28px;">star</span>
+            <h2>Músicas para o Próximo Domingo</h2>
+          </div>
+          <div class="louvores-list" 
+               [class.carousel-pc]="playlistSongs.length > 3"
+               [class.carousel-mobile]="playlistSongs.length > 1">
+            <app-louvor-card *ngFor="let louvor of playlistSongs" [louvor]="louvor"></app-louvor-card>
+          </div>
+          <hr class="section-divider">
+        </section>
+      </ng-container>
+
       <div class="temas-grid">
+        <!-- Playlist Card Dinâmico (Topo) -->
+        <ng-container *ngIf="(playlistSongs$ | async)?.length">
+          <ng-container *ngTemplateOutlet="playlistCard"></ng-container>
+        </ng-container>
+
         <a routerLink="/tema/Ceia" class="tema-card">
           <div class="tema-icon"><span class="material-icons">wine_bar</span></div>
           <h3>Ceia</h3>
@@ -43,12 +66,10 @@ import { firstValueFrom } from 'rxjs';
           <h3>Culto Solene</h3>
         </a>
 
-        <!-- Playlist Card -->
-        <a href="javascript:void(0)" (click)="abrirModalPlaylist()" class="tema-card playlist-card">
-          <div class="tema-icon"><span class="material-icons">queue_music</span></div>
-          <h3>Playlist Next Service</h3>
-          <p style="font-size: 13px; color: var(--text-muted); margin-top: 8px; text-align: center;">Ouvir Agora</p>
-        </a>
+        <!-- Playlist Card Dinâmico (Original) -->
+        <ng-container *ngIf="!((playlistSongs$ | async)?.length)">
+          <ng-container *ngTemplateOutlet="playlistCard"></ng-container>
+        </ng-container>
 
         <!-- Repositório Card -->
         <a routerLink="/repositorio" class="tema-card repositorio-card">
@@ -57,6 +78,14 @@ import { firstValueFrom } from 'rxjs';
           <p style="font-size: 13px; color: var(--text-muted); margin-top: 8px; text-align: center;">Todas as Músicas</p>
         </a>
       </div>
+
+      <ng-template #playlistCard>
+        <a href="javascript:void(0)" (click)="abrirModalPlaylist()" class="tema-card playlist-card">
+          <div class="tema-icon"><span class="material-icons">queue_music</span></div>
+          <h3>Playlist Próximo Domingo</h3>
+          <p style="font-size: 13px; color: var(--text-muted); margin-top: 8px; text-align: center;">Ouvir Agora</p>
+        </a>
+      </ng-template>
 
       <!-- Modal de Plataforma -->
       <div class="modal-overlay" *ngIf="showModal" (click)="fecharModal()">
@@ -232,17 +261,95 @@ import { firstValueFrom } from 'rxjs';
     .btn-cancel:hover {
       background: rgba(255,255,255,0.05);
     }
+    .playlist-section {
+      margin-bottom: 40px;
+    }
+    .playlist-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 25px;
+    }
+    .playlist-header h2 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 400;
+      color: #ffb800;
+    }
+    .louvores-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 20px;
+    }
+    
+    /* Carousel mobile (< 768px) */
+    @media (max-width: 767px) {
+      .louvores-list.carousel-mobile {
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        padding-bottom: 10px;
+        scroll-behavior: smooth;
+      }
+      .louvores-list.carousel-mobile app-louvor-card {
+        flex: 0 0 85%;
+        scroll-snap-align: center;
+      }
+    }
+
+    /* Carousel PC (>= 768px) */
+    @media (min-width: 768px) {
+      .louvores-list.carousel-pc {
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        padding-bottom: 15px;
+        scroll-behavior: smooth;
+      }
+      .louvores-list.carousel-pc app-louvor-card {
+        flex: 0 0 280px;
+        scroll-snap-align: start;
+      }
+    }
+
+    /* Scrollbar estilizada para o carrossel */
+    .louvores-list::-webkit-scrollbar {
+      height: 6px;
+    }
+    .louvores-list::-webkit-scrollbar-track {
+      background: rgba(255,255,255,0.05);
+      border-radius: 4px;
+    }
+    .louvores-list::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.2);
+      border-radius: 4px;
+    }
+    .louvores-list::-webkit-scrollbar-thumb:hover {
+      background: rgba(255,255,255,0.3);
+    }
+
+    .section-divider {
+      margin-top: 40px;
+      border: 0;
+      border-top: 1px solid var(--card-border);
+    }
   `]
 })
 export class HomeComponent implements OnInit {
   private louvorService = inject(LouvorService);
   showModal = false;
   configPlaylist: PlaylistConfig | null = null;
+  playlistSongs$!: Observable<Louvor[]>;
 
   ngOnInit() {
     this.louvorService.getPlaylistConfig().subscribe(config => {
       this.configPlaylist = config;
     });
+
+    this.playlistSongs$ = this.louvorService.getLouvores().pipe(
+      map(louvores => louvores.filter(l => l.inPlaylist))
+    );
   }
 
   abrirModalPlaylist() {
@@ -258,7 +365,7 @@ export class HomeComponent implements OnInit {
       try {
         const louvores = await firstValueFrom(this.louvorService.getLouvores());
         const selecionados = louvores.filter(l => l.inPlaylist && l.linkYoutube);
-        
+
         if (selecionados.length === 0) {
           alert('Nenhum louvor com link do YouTube foi selecionado para a playlist.');
           return;
@@ -291,7 +398,7 @@ export class HomeComponent implements OnInit {
     }
 
     const url = this.configPlaylist[plataforma];
-    
+
     if (!url) {
       alert(`O link da playlist no ${plataforma === 'ytmusic' ? 'YouTube Music' : 'Spotify'} não foi configurado.`);
       return;
