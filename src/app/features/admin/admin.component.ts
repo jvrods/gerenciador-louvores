@@ -123,14 +123,19 @@ import { Observable } from 'rxjs';
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let louvor of louvores$ | async">
-              <td>{{ louvor.titulo }}</td>
+            <tr *ngFor="let louvor of louvores$ | async" [class.suggestion-row]="louvor.isSuggestion">
+              <td>
+                {{ louvor.titulo }}
+                <span *ngIf="louvor.isSuggestion" class="badge-sugestao">Sugestão</span>
+              </td>
               <td>{{ louvor.tema }}</td>
               <td style="text-align: center;">
-                <input type="checkbox" [checked]="louvor.inPlaylist" (change)="togglePlaylist(louvor)" style="transform: scale(1.5);">
+                <input *ngIf="!louvor.isSuggestion" type="checkbox" [checked]="louvor.inPlaylist" (change)="togglePlaylist(louvor)" style="transform: scale(1.5);">
+                <span *ngIf="louvor.isSuggestion" style="color: var(--text-muted); font-size: 12px;">-</span>
               </td>
               <td>
-                <button (click)="editarLouvor(louvor)" class="btn" style="padding: 5px 10px; font-size: 12px; margin-right: 5px;">Editar</button>
+                <button *ngIf="louvor.isSuggestion" (click)="aprovarSugestao(louvor)" class="btn btn-success" style="padding: 5px 10px; font-size: 12px; margin-right: 5px; background: #1DB954; color: white; border: none; border-radius: 4px; cursor: pointer;">Aprovar</button>
+                <button *ngIf="!louvor.isSuggestion" (click)="editarLouvor(louvor)" class="btn" style="padding: 5px 10px; font-size: 12px; margin-right: 5px;">Editar</button>
                 <button (click)="deletarLouvor(louvor.id!)" class="btn btn-danger" style="padding: 5px 10px; font-size: 12px;">Excluir</button>
               </td>
             </tr>
@@ -198,6 +203,19 @@ import { Observable } from 'rxjs';
     .required-asterisk {
       color: #ff4444;
       font-weight: bold;
+    }
+    .suggestion-row td {
+      background: rgba(255, 184, 0, 0.05);
+    }
+    .badge-sugestao {
+      background: #ffb800;
+      color: black;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 8px;
+      font-weight: bold;
+      vertical-align: middle;
     }
   `]
 })
@@ -280,6 +298,15 @@ export class AdminComponent implements OnInit {
     await this.louvorService.updateLouvor(updatedLouvor);
     
     this.showToast(isAdding ? 'Louvor adicionado à playlist!' : 'Louvor removido da playlist!');
+  }
+
+  async aprovarSugestao(louvor: Louvor) {
+    const updatedLouvor = { ...louvor, isSuggestion: false };
+    
+    // Abre o formulário de edição com a flag falsa, para que ao salvar vire oficial
+    this.editarLouvor(updatedLouvor);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    this.showToast('Revise os dados e clique em "Atualizar Louvor" para oficializar.');
   }
 
   showToast(message: string) {

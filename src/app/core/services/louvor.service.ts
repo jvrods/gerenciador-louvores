@@ -26,6 +26,10 @@ export class LouvorService {
     return addDoc(this.louvoresCollection, louvor);
   }
 
+  addSuggestion(louvor: Partial<Louvor>) {
+    return addDoc(this.louvoresCollection, { ...louvor, isSuggestion: true });
+  }
+
   deleteLouvor(id: string) {
     const docRef = doc(this.firestore, `louvores/${id}`);
     return deleteDoc(docRef);

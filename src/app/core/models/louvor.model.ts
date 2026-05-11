@@ -11,4 +11,5 @@ export interface Louvor {
   linkYoutubeMusic?: string;
   imagemUrl?: string;
   inPlaylist?: boolean;
+  isSuggestion?: boolean;
 }

@@ -28,6 +28,22 @@ import { map, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
     <main class="container">
 
+      <!-- Ações do Repositório (Sugerir e Toggle) -->
+      <div class="repo-actions">
+        <button class="btn btn-suggest" (click)="abrirModalSugestao()">
+          <span class="material-icons">add_circle_outline</span>
+          Sugerir Música
+        </button>
+        <div class="toggle-container">
+          <span [class.active]="!verSugestoes">Acervo</span>
+          <label class="switch">
+            <input type="checkbox" [(ngModel)]="verSugestoes" (change)="onToggleSugestoes()">
+            <span class="slider round"></span>
+          </label>
+          <span [class.active]="verSugestoes">Sugestões</span>
+        </div>
+      </div>
+
       <!-- Barra de Pesquisa -->
       <div class="search-wrapper">
         <span class="material-icons search-icon">search</span>
@@ -72,6 +88,41 @@ import { map, debounceTime, distinctUntilChanged } from 'rxjs/operators';
           </div>
         </ng-template>
       </ng-container>
+
+      <!-- Modal de Sugestão -->
+      <div class="modal-overlay" *ngIf="showSuggestionModal" (click)="fecharModalSugestao()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>Sugerir Nova Música</h3>
+            <button class="close-btn" (click)="fecharModalSugestao()"><span class="material-icons">close</span></button>
+          </div>
+          <p class="modal-subtitle">Conhece um louvor que deveria estar aqui? Envie sua sugestão!</p>
+          
+          <form (ngSubmit)="enviarSugestao()">
+            <div class="form-group">
+              <label>Título da Música <span class="required">*</span></label>
+              <input type="text" [(ngModel)]="novaSugestao.titulo" name="titulo" required placeholder="Ex: Maranata" class="form-input">
+            </div>
+            <div class="form-group">
+              <label>Artista <span class="required">*</span></label>
+              <input type="text" [(ngModel)]="novaSugestao.artista" name="artista" required placeholder="Ex: Ministério Avivah" class="form-input">
+            </div>
+            <div class="form-group">
+              <label>Link do YouTube (Opcional)</label>
+              <input type="url" [(ngModel)]="novaSugestao.linkYoutube" name="linkYoutube" placeholder="https://youtube.com/watch?v=..." class="form-input">
+            </div>
+            
+            <button type="submit" class="btn btn-primary" [disabled]="isSubmitting" style="width: 100%; margin-top: 10px;">
+              {{ isSubmitting ? 'Enviando...' : 'Enviar Sugestão' }}
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Toast Notification -->
+      <div class="toast" [class.show]="toastMessage">
+        {{ toastMessage }}
+      </div>
 
     </main>
   `,
@@ -211,10 +262,220 @@ import { map, debounceTime, distinctUntilChanged } from 'rxjs/operators';
       font-size: 15px;
     }
 
+    /* ── Ações e Toggle ── */
+    .repo-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    .btn-suggest {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      padding: 10px 22px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(var(--primary-rgb, 90, 117, 230), 0.3);
+    }
+    .btn-suggest:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(var(--primary-rgb, 90, 117, 230), 0.4);
+    }
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--card-bg);
+      padding: 8px 15px;
+      border-radius: 50px;
+      border: 1px solid var(--card-border);
+    }
+    .toggle-container span {
+      font-size: 14px;
+      color: var(--text-muted);
+      transition: color 0.3s;
+    }
+    .toggle-container span.active {
+      color: var(--text-color);
+      font-weight: 500;
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 46px;
+      height: 24px;
+    }
+    .switch input { 
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: var(--card-border);
+      transition: .4s;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .4s;
+    }
+    input:checked + .slider {
+      background-color: var(--primary-color);
+    }
+    input:checked + .slider:before {
+      transform: translateX(22px);
+    }
+    .slider.round {
+      border-radius: 34px;
+    }
+    .slider.round:before {
+      border-radius: 50%;
+    }
+
+    /* ── Modal de Sugestão ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.95);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 20px;
+    }
+    .modal-content {
+      background: #150e20;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      padding: 30px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+      animation: modalIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.94) translateY(12px); }
+      to   { opacity: 1; transform: scale(1)    translateY(0); }
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .modal-header h3 {
+      margin: 0;
+      font-size: 22px;
+    }
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 24px;
+      padding: 0;
+      display: flex;
+    }
+    .close-btn:hover {
+      color: white;
+    }
+    .modal-subtitle {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 25px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text-color);
+      font-size: 14px;
+    }
+    .form-group .required {
+      color: #ff4444;
+    }
+    .form-input {
+      width: 100%;
+      padding: 12px 15px;
+      background: rgba(0,0,0,0.2);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      color: white;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+    }
+    .form-input:focus {
+      border-color: var(--primary-color);
+    }
+    .btn-primary {
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn-primary:hover {
+      opacity: 0.9;
+    }
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: -50px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--primary-color);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transition: bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 1000;
+      font-weight: 500;
+      pointer-events: none;
+    }
+    .toast.show {
+      bottom: 20px;
+    }
+
     /* ── Responsive ── */
     @media (max-width: 480px) {
       .header-title h1 { font-size: 16px; }
       .louvores-grid { grid-template-columns: 1fr; gap: 14px; }
+      .repo-actions { flex-direction: column-reverse; align-items: stretch; }
+      .toggle-container { justify-content: center; }
+      .btn-suggest { justify-content: center; }
     }
   `]
 })
@@ -222,26 +483,82 @@ export class RepositorioComponent implements OnInit {
   private louvorService = inject(LouvorService);
 
   termoBusca = '';
+  verSugestoes = false;
   private busca$ = new BehaviorSubject<string>('');
+  private sugestoes$ = new BehaviorSubject<boolean>(false);
 
   louvoresFiltrados$!: Observable<Louvor[]>;
+
+  // Variáveis do Modal
+  showSuggestionModal = false;
+  isSubmitting = false;
+  toastMessage = '';
+  novaSugestao: Partial<Louvor> = { titulo: '', artista: '', linkYoutube: '', tema: 'Geral', linkCifra: '' };
 
   ngOnInit() {
     this.louvoresFiltrados$ = combineLatest([
       this.louvorService.getLouvores(),
       this.busca$.pipe(debounceTime(200), distinctUntilChanged()),
+      this.sugestoes$
     ]).pipe(
-      map(([louvores, busca]) => {
+      map(([louvores, busca, showSugestoes]) => {
         const termo = busca.trim().toLowerCase();
         return louvores
-          .filter(l =>
-            !termo ||
-            l.titulo.toLowerCase().includes(termo) ||
-            l.artista.toLowerCase().includes(termo)
-          )
+          .filter(l => {
+            // Filtro de sugestão vs oficial
+            const isSugestao = l.isSuggestion === true;
+            if (showSugestoes !== isSugestao) return false;
+
+            // Filtro de texto
+            if (!termo) return true;
+            return l.titulo.toLowerCase().includes(termo) || l.artista.toLowerCase().includes(termo);
+          })
           .sort((a, b) => a.titulo.localeCompare(b.titulo, 'pt-BR', { sensitivity: 'base' }));
       })
     );
+  }
+
+  onToggleSugestoes() {
+    this.sugestoes$.next(this.verSugestoes);
+  }
+
+  abrirModalSugestao() {
+    this.novaSugestao = { titulo: '', artista: '', linkYoutube: '', tema: 'Geral', linkCifra: '' };
+    this.showSuggestionModal = true;
+  }
+
+  fecharModalSugestao() {
+    this.showSuggestionModal = false;
+  }
+
+  async enviarSugestao() {
+    if (!this.novaSugestao.titulo || !this.novaSugestao.titulo.trim()) {
+      this.showToast('Erro: O Título é obrigatório.');
+      return;
+    }
+    if (!this.novaSugestao.artista || !this.novaSugestao.artista.trim()) {
+      this.showToast('Erro: O Artista é obrigatório.');
+      return;
+    }
+
+    this.isSubmitting = true;
+    try {
+      await this.louvorService.addSuggestion(this.novaSugestao);
+      this.showToast('Sugestão enviada com sucesso! Obrigado.');
+      this.fecharModalSugestao();
+    } catch (error) {
+      console.error('Erro ao enviar sugestão:', error);
+      this.showToast('Erro ao enviar sugestão. Tente novamente.');
+    } finally {
+      this.isSubmitting = false;
+    }
+  }
+
+  showToast(message: string) {
+    this.toastMessage = message;
+    setTimeout(() => {
+      this.toastMessage = '';
+    }, 4000);
   }
 
   onBuscaChange(valor: string) {
