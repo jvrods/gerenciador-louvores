@@ -116,12 +116,13 @@ import { map } from 'rxjs/operators';
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
           <h2 style="margin: 0;">Louvores Cadastrados</h2>
           
-          <div style="display: flex; align-items: center; gap: 10px; background: rgba(255, 184, 0, 0.1); padding: 8px 15px; border-radius: 50px; border: 1px solid rgba(255, 184, 0, 0.2);">
-            <span style="font-size: 13px; color: var(--text-muted);">Apenas Sugestões</span>
+          <div style="display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.15); padding: 8px 15px; border-radius: 50px; border: 1px solid var(--card-border);">
+            <span [style.color]="!apenasSugestoes ? 'white' : 'var(--text-muted)'" style="font-size: 13px; font-weight: 500;">Acervo</span>
             <label class="switch-admin">
               <input type="checkbox" [(ngModel)]="apenasSugestoes" (change)="onToggleFiltroSugestoes()">
               <span class="slider-admin round"></span>
             </label>
+            <span [style.color]="apenasSugestoes ? '#ffb800' : 'var(--text-muted)'" style="font-size: 13px; font-weight: 500;">Sugestões</span>
           </div>
         </div>
         <table>
@@ -290,10 +291,10 @@ export class AdminComponent implements OnInit {
       this.filtroSugestoes$
     ]).pipe(
       map(([louvores, apenasSugestoes]) => {
-        if (apenasSugestoes) {
-          return louvores.filter(l => l.isSuggestion === true);
-        }
-        return louvores;
+        return louvores.filter(l => {
+          const isSugestao = l.isSuggestion === true;
+          return apenasSugestoes ? isSugestao : !isSugestao;
+        });
       })
     );
 
