@@ -593,9 +593,14 @@ export class RepositorioComponent implements OnInit {
       this.showToast('Sugestão Registrada! Muito Obrigado');
       // Reseta o formulário para uma nova sugestão sem fechar o modal
       this.novaSugestao = { titulo: '', artista: '', linkYoutube: '', tema: 'Geral', linkCifra: '' };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao enviar sugestão:', error);
-      this.showToast('Erro ao enviar sugestão. Tente novamente.');
+      if (error.code === 'permission-denied') {
+        this.showToast('Erro: Permissão negada no Firebase. Verifique as regras de segurança.');
+        alert('Erro de Permissão: Você precisa ajustar as regras do Firestore para permitir sugestões públicas.');
+      } else {
+        this.showToast('Erro ao enviar sugestão. Verifique sua conexão.');
+      }
     } finally {
       this.isSubmitting = false;
     }
