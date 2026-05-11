@@ -590,7 +590,7 @@ export class RepositorioComponent implements OnInit {
     this.isSubmitting = true;
     try {
       await this.louvorService.addSuggestion(this.novaSugestao);
-      this.showToast('Sugestão Registrada! Muito Obrigado');
+      this.showToast('Sugestão Enviada Com Sucesso, Muito Obrigado!');
       // Reseta o formulário para uma nova sugestão sem fechar o modal
       this.novaSugestao = { titulo: '', artista: '', linkYoutube: '', tema: 'Geral', linkCifra: '' };
     } catch (error: any) {
@@ -610,7 +610,7 @@ export class RepositorioComponent implements OnInit {
     this.toastMessage = message;
     setTimeout(() => {
       this.toastMessage = '';
-    }, 4000);
+    }, 10000);
   }
 
   onBuscaChange(valor: string) {
