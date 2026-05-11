@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { LouvorService, PlaylistConfig } from '../../core/services/louvor.service';
+import { BrandingService } from '../../core/services/branding.service';
 import { firstValueFrom, Observable, map } from 'rxjs';
 import { LouvorCardComponent } from '../../shared/components/louvor-card/louvor-card.component';
 import { Louvor } from '../../core/models/louvor.model';
@@ -11,11 +12,11 @@ import { Louvor } from '../../core/models/louvor.model';
   standalone: true,
   imports: [CommonModule, RouterLink, LouvorCardComponent],
   template: `
-    <header class="header">
+    <header class="header" *ngIf="brandingService.config$ | async as branding">
       <div class="container header-content">
         <div style="display: flex; align-items: center; gap: 10px;">
-          <span class="material-symbols-outlined" style="font-size: 28px;">church</span>
-          <h1>Gerenciador de Louvores</h1>
+          <span class="material-icons" style="font-size: 28px;">{{ branding.logoIcon }}</span>
+          <h1>{{ branding.appName }}</h1>
         </div>
         <a routerLink="/login" class="btn-login">Admin</a>
       </div>
@@ -338,6 +339,7 @@ import { Louvor } from '../../core/models/louvor.model';
 })
 export class HomeComponent implements OnInit {
   private louvorService = inject(LouvorService);
+  public brandingService = inject(BrandingService);
   showModal = false;
   configPlaylist: PlaylistConfig | null = null;
   playlistSongs$!: Observable<Louvor[]>;

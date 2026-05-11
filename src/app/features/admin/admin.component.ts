@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LouvorService, PlaylistConfig } from '../../core/services/louvor.service';
 import { AuthService } from '../../core/services/auth.service';
+import { BrandingService } from '../../core/services/branding.service';
 import { Louvor } from '../../core/models/louvor.model';
 import { Observable } from 'rxjs';
 
@@ -12,9 +13,9 @@ import { Observable } from 'rxjs';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <header class="header">
+    <header class="header" *ngIf="brandingService.config$ | async as branding">
       <div class="container header-content">
-        <h1>Painel Admin</h1>
+        <h1>Painel Admin - {{ branding.appName }}</h1>
         <div>
           <button (click)="voltar()" class="btn" style="margin-right: 10px; background: transparent; border: 1px solid white;">Voltar</button>
           <button (click)="logout()" class="btn btn-danger">Sair</button>
@@ -203,6 +204,7 @@ import { Observable } from 'rxjs';
 export class AdminComponent implements OnInit {
   private louvorService = inject(LouvorService);
   private authService = inject(AuthService);
+  public brandingService = inject(BrandingService);
   private router = inject(Router);
 
   louvores$!: Observable<Louvor[]>;
