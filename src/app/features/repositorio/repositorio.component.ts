@@ -7,7 +7,7 @@ import { LouvorCardComponent } from '../../shared/components/louvor-card/louvor-
 import { Louvor } from '../../core/models/louvor.model';
 import { Observable, BehaviorSubject, combineLatest } from 'rxjs';
 import { map, debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-repositorio',
@@ -507,6 +507,7 @@ import { ActivatedRoute } from '@angular/router';
 export class RepositorioComponent implements OnInit {
   private louvorService = inject(LouvorService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
   termoBusca = '';
   verSugestoes = false;
@@ -558,10 +559,22 @@ export class RepositorioComponent implements OnInit {
   abrirModalSugestao() {
     this.novaSugestao = { titulo: '', artista: '', linkYoutube: '', tema: 'Geral', linkCifra: '' };
     this.showSuggestionModal = true;
+    // Atualiza a URL para incluir o parâmetro (Deep Linking)
+    this.router.navigate([], { 
+      relativeTo: this.route,
+      queryParams: { sugerir: 'true' },
+      queryParamsHandling: 'merge'
+    });
   }
 
   fecharModalSugestao() {
     this.showSuggestionModal = false;
+    // Remove o parâmetro da URL ao fechar
+    this.router.navigate([], { 
+      relativeTo: this.route,
+      queryParams: { sugerir: null },
+      queryParamsHandling: 'merge'
+    });
   }
 
   async enviarSugestao() {
