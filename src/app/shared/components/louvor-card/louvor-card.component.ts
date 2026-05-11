@@ -40,7 +40,10 @@ import { Louvor } from '../../../core/models/louvor.model';
 
       <div class="card-content">
         <div class="tags">
-          <span class="tag tag-blue" *ngIf="louvor?.tema">{{ louvor?.tema }}</span>
+          <span class="tag tag-suggestion" *ngIf="louvor?.isSuggestion; else officialTag">Sugestão</span>
+          <ng-template #officialTag>
+            <span class="tag tag-blue" *ngIf="louvor?.tema">{{ louvor?.tema }}</span>
+          </ng-template>
         </div>
         <h3>{{ louvor?.titulo }}</h3>
         <p class="artist">{{ louvor?.artista }}</p>
@@ -193,6 +196,7 @@ import { Louvor } from '../../../core/models/louvor.model';
       text-transform: uppercase;
     }
     .tag-blue { background: #5a75e6; color: white; }
+    .tag-suggestion { background: #ffb800; color: black; }
 
     .card-content h3 {
       margin: 0 0 5px 0;

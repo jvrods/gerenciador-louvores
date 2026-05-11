@@ -6,7 +6,8 @@ import { LouvorService, PlaylistConfig } from '../../core/services/louvor.servic
 import { AuthService } from '../../core/services/auth.service';
 import { BrandingService } from '../../core/services/branding.service';
 import { Louvor } from '../../core/models/louvor.model';
-import { Observable } from 'rxjs';
+import { Observable, BehaviorSubject, combineLatest } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-admin',
@@ -112,7 +113,17 @@ import { Observable } from 'rxjs';
       </div>
 
       <div class="lista-admin">
-        <h2>Louvores Cadastrados</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h2 style="margin: 0;">Louvores Cadastrados</h2>
+          
+          <div style="display: flex; align-items: center; gap: 10px; background: rgba(255, 184, 0, 0.1); padding: 8px 15px; border-radius: 50px; border: 1px solid rgba(255, 184, 0, 0.2);">
+            <span style="font-size: 13px; color: var(--text-muted);">Apenas Sugestões</span>
+            <label class="switch-admin">
+              <input type="checkbox" [(ngModel)]="apenasSugestoes" (change)="onToggleFiltroSugestoes()">
+              <span class="slider-admin round"></span>
+            </label>
+          </div>
+        </div>
         <table>
           <thead>
             <tr>
@@ -217,6 +228,34 @@ import { Observable } from 'rxjs';
       font-weight: bold;
       vertical-align: middle;
     }
+    .switch-admin {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 20px;
+    }
+    .switch-admin input { opacity: 0; width: 0; height: 0; }
+    .slider-admin {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #4a3b5c;
+      transition: .4s;
+    }
+    .slider-admin:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .4s;
+    }
+    input:checked + .slider-admin { background-color: #ffb800; }
+    input:checked + .slider-admin:before { transform: translateX(20px); }
+    .slider-admin.round { border-radius: 34px; }
+    .slider-admin.round:before { border-radius: 50%; }
   `]
 })
 export class AdminComponent implements OnInit {
@@ -226,6 +265,8 @@ export class AdminComponent implements OnInit {
   private router = inject(Router);
 
   louvores$!: Observable<Louvor[]>;
+  apenasSugestoes = false;
+  private filtroSugestoes$ = new BehaviorSubject<boolean>(false);
   editando = false;
   toastMessage = '';
   showLinksForm = false;
@@ -244,7 +285,18 @@ export class AdminComponent implements OnInit {
   };
 
   ngOnInit() {
-    this.louvores$ = this.louvorService.getLouvores();
+    this.louvores$ = combineLatest([
+      this.louvorService.getLouvores(),
+      this.filtroSugestoes$
+    ]).pipe(
+      map(([louvores, apenasSugestoes]) => {
+        if (apenasSugestoes) {
+          return louvores.filter(l => l.isSuggestion === true);
+        }
+        return louvores;
+      })
+    );
+
     this.louvorService.getPlaylistConfig().subscribe(config => {
       if (config) {
         this.configPlaylist = config;
@@ -324,6 +376,10 @@ export class AdminComponent implements OnInit {
 
   voltar() {
     this.router.navigate(['/']);
+  }
+
+  onToggleFiltroSugestoes() {
+    this.filtroSugestoes$.next(this.apenasSugestoes);
   }
 
   logout() {
