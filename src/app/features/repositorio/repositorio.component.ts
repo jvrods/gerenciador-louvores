@@ -474,9 +474,33 @@ import { ActivatedRoute } from '@angular/router';
     @media (max-width: 480px) {
       .header-title h1 { font-size: 16px; }
       .louvores-grid { grid-template-columns: 1fr; gap: 14px; }
-      .repo-actions { flex-direction: column-reverse; align-items: stretch; }
-      .toggle-container { justify-content: center; }
-      .btn-suggest { justify-content: center; }
+      
+      .repo-actions { 
+        flex-direction: row; 
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+
+      .btn-suggest { 
+        padding: 8px 12px;
+        font-size: 13px;
+        gap: 5px;
+        flex: 1;
+        justify-content: center;
+        white-space: nowrap;
+      }
+      .btn-suggest span { font-size: 18px; }
+
+      .toggle-container { 
+        padding: 6px 10px;
+        gap: 6px;
+        flex: 0 0 auto;
+      }
+      .toggle-container span { font-size: 12px; }
+      .switch { width: 36px; height: 20px; }
+      .slider:before { height: 14px; width: 14px; left: 3px; bottom: 3px; }
+      input:checked + .slider:before { transform: translateX(16px); }
     }
   `]
 })
